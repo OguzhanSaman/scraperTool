@@ -15,10 +15,14 @@ def scrape_resmi_gazete(request):
         content = scrape_resmi_gazete_content()
         
         if content is None:
-            logger.error("Scraping failed - no content returned")
+            logger.error("No content available - neither manual data nor web scraping succeeded")
             return JsonResponse(
-                {"error": "Failed to scrape content from Resmi Gazete"}, 
-                status=500,
+                {
+                    "error": "No Resmi Gazete data available",
+                    "message": "Please ensure manual data has been entered in the admin panel, or try again later",
+                    "admin_url": "/admin/Scrapper/manualresmigazetedata/"
+                }, 
+                status=400,
                 json_dumps_params={'ensure_ascii': False}
             )
         
