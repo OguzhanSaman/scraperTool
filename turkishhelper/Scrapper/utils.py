@@ -11,39 +11,43 @@ def scrape_resmi_gazete_content():
     """
     Fetches and parses the main content from the Resmi Gazete homepage.
     First checks for manual data, then falls back to web scraping.
-    Returns the parsed HTML content (as a string) or None if an error occurs.
+
+    Returns a dict: {"content": str | None, "date_added": datetime | None}.
+    date_added is set when the payload comes from ManualResmiGazeteData; otherwise None.
     """
-    # First, check for manual data from admin
-    manual_data = get_manual_resmi_gazete_data()
-    if manual_data:
+    manual_html, manual_date_added = get_manual_resmi_gazete_data()
+    if manual_html:
         logger.info("Using manual Resmi Gazete data from admin")
-        return process_manual_html(manual_data)
-    
-    # If no manual data, try web scraping
+        return {
+            "content": process_manual_html(manual_html),
+            "date_added": manual_date_added,
+        }
+
     logger.info("No manual data found, attempting web scraping...")
-    return scrape_from_website()
+    return {"content": scrape_from_website(), "date_added": None}
 
 
 def get_manual_resmi_gazete_data():
     """
-    Get the most recent active manual data entry
+    Get the most recent active manual data entry.
+
+    Returns (html_content, date_added) or (None, None) if none available.
     """
     try:
-        # Get the most recent active entry
         manual_entry = ManualResmiGazeteData.objects.filter(
             is_active=True
         ).order_by('-date_added').first()
-        
+
         if manual_entry and manual_entry.html_content:
             logger.info(f"Found manual data from {manual_entry.date_added}")
-            return manual_entry.html_content
-        
+            return manual_entry.html_content, manual_entry.date_added
+
         logger.warning("No active manual data found")
-        return None
-        
+        return None, None
+
     except Exception as e:
         logger.error(f"Error retrieving manual data: {e}")
-        return None
+        return None, None
 
 
 def process_manual_html(html_content):
@@ -164,10 +168,11 @@ def scrape_from_website():
         return None
 
 if __name__ == '__main__':
-    # Example usage when running the script directly
-    content = scrape_resmi_gazete_content()
+    result = scrape_resmi_gazete_content()
+    content = result["content"]
     if content:
         print("Successfully scraped content (first 500 chars):")
         print(content[:500] + "...")
+        print("date_added:", result["date_added"])
     else:
         print("Failed to scrape content.")

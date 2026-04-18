@@ -31,7 +31,8 @@ class ManualResmiGazeteData(models.Model):
         ordering = ['-date_added']
     
     def __str__(self):
-        return f"Resmi Gazete Data - {self.date_added.strftime('%Y-%m-%d %H:%M')}"
+        local = timezone.localtime(self.date_added)
+        return f"Resmi Gazete Data - {local.strftime('%Y-%m-%d %H:%M')}"
     
     @property
     def content_length(self):

@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.utils import timezone
 from .utils import scrape_resmi_gazete_content
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -23,7 +24,9 @@ def scrape_resmi_gazete(request):
     
     try:
         # Scrape both gazette and wikipedia content
-        content = scrape_resmi_gazete_content()
+        gazette_result = scrape_resmi_gazete_content()
+        content = gazette_result["content"]
+        date_added = gazette_result["date_added"]
         wikipedia_content = None
         
         # Try to get Wikipedia content
@@ -57,6 +60,9 @@ def scrape_resmi_gazete(request):
         # Return both gazette and wikipedia content
         response_data = {
             'content': content,
+            'date_added': timezone.localtime(date_added).isoformat()
+            if date_added
+            else None,
         }
         
         if wikipedia_content:
